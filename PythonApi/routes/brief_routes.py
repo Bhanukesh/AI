@@ -1,6 +1,6 @@
 import asyncio
 from datetime import date
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from models.brief_models import BriefGenerateRequest, OnboardingRequest, BriefResponse
 from agents import analyst, researcher, synthesizer, judge
 from services.news_fetcher import fetch_top_stories
@@ -19,8 +19,10 @@ ONBOARDING_NEWS = [
 
 
 @router.post("/brief/generate", response_model=BriefResponse)
-async def generate_brief(request: BriefGenerateRequest) -> BriefResponse:
+async def generate_brief(request: BriefGenerateRequest, http_request: Request) -> BriefResponse:
     try:
+        if await http_request.is_disconnected():
+            raise HTTPException(status_code=499, detail="Client disconnected")
         news_items = await fetch_top_stories(5)
         history_bite = get_history_bite(request.history_bite_index)
 
@@ -52,8 +54,10 @@ async def generate_brief(request: BriefGenerateRequest) -> BriefResponse:
 
 
 @router.post("/brief/onboarding", response_model=BriefResponse)
-async def generate_onboarding(request: OnboardingRequest) -> BriefResponse:
+async def generate_onboarding(request: OnboardingRequest, http_request: Request) -> BriefResponse:
     try:
+        if await http_request.is_disconnected():
+            raise HTTPException(status_code=499, detail="Client disconnected")
         history_bite = get_history_bite(1)
 
         analyst_out, researcher_out, synthesizer_out = await asyncio.gather(

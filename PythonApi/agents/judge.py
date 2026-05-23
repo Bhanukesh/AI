@@ -61,7 +61,7 @@ HISTORY BITE FOR TODAY:
 Score, pick a winner, merge the best parts, and produce the final brief + TLDR."""
 
     response = await get_client().chat.completions.create(
-        model="grok-2",
+        model="grok-4.3",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_content}

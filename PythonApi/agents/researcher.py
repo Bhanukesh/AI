@@ -21,7 +21,7 @@ Be precise and journalistic. 3-4 paragraphs."""
 async def run(news_items: list[str]) -> str:
     news_text = "\n".join(f"- {item}" for item in news_items)
     response = await get_client().chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"Today's AI news:\n{news_text}\n\nWrite your research summary."}

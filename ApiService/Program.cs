@@ -38,10 +38,13 @@ builder.Services.AddOpenApiDocument(options =>
 });
 
 builder.Services.AddHttpClient<PythonClient>(
-    static client => client.BaseAddress = new("http://pythonapi"));
+    static client => client.BaseAddress = new("http://localhost:8080"));
 
 builder.Services.AddHttpClient<BriefClient>(
-    static client => client.BaseAddress = new("http://pythonapi"));
+    static client => {
+        client.BaseAddress = new("http://localhost:8080");
+        client.Timeout = TimeSpan.FromSeconds(120);
+    });
 
 var app = builder.Build();
 

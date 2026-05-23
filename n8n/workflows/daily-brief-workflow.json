@@ -12,7 +12,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/users",
+        "url": "http://host.docker.internal:5518/users",
         "options": {}
       },
       "name": "GET All Users",
@@ -40,7 +40,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/brief/onboarding",
+        "url": "http://host.docker.internal:5518/brief/onboarding",
         "method": "POST",
         "sendBody": true,
         "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
@@ -53,7 +53,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/brief/generate",
+        "url": "http://host.docker.internal:5518/brief/generate",
         "method": "POST",
         "sendBody": true,
         "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
@@ -66,9 +66,9 @@
     },
     {
       "parameters": {
-        "from": "={{ $env.TWILIO_WHATSAPP_NUMBER }}",
-        "to": "=whatsapp:{{ $('Loop Over Users').item.json.whatsAppNumber }}",
-        "message": "={{ $json.whatsappText }}"
+        "from": "whatsapp:+14155238886",
+        "to": "={{ 'whatsapp:' + $('Loop Over Users').item.json.whatsAppNumber }}",
+        "message": "={{ $json.whatsAppText }}"
       },
       "name": "Send WhatsApp",
       "type": "n8n-nodes-base.twilio",
@@ -86,7 +86,7 @@
         },
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"from\": \"AI Daily Brief <brief@yourdomain.com>\",\n  \"to\": [\"{{ $('Loop Over Users').item.json.email }}\"],\n  \"subject\": \"🤖 AI Daily Brief | {{ $now.format('MMM D, YYYY') }}\",\n  \"html\": {{ JSON.stringify($json.briefHtml) }}\n}",
+        "jsonBody": "={\n  \"from\": \"AI Daily Brief <onboarding@resend.dev>\",\n  \"to\": [\"{{ $('Loop Over Users').item.json.email }}\"],\n  \"subject\": \"🤖 AI Daily Brief | {{ $now.format('MMM D, YYYY') }}\",\n  \"html\": {{ JSON.stringify($json.briefHtml) }}\n}",
         "options": {}
       },
       "name": "Send Email via Resend",
@@ -96,11 +96,11 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/delivery/log",
+        "url": "http://host.docker.internal:5518/delivery/log",
         "method": "POST",
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('Send WhatsApp').item.json.whatsappText.substring(0, 200) }}\"\n}",
+        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('Send WhatsApp').item.json.whatsAppText.substring(0, 200) }}\"\n}",
         "options": {}
       },
       "name": "Log Delivery",
@@ -110,7 +110,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/users/{{ $('Loop Over Users').item.json.id }}",
+        "url": "=http://host.docker.internal:5518/users/{{ $('Loop Over Users').item.json.id }}",
         "method": "PUT",
         "sendBody": true,
         "bodyType": "json",
@@ -126,7 +126,7 @@
   "connections": {
     "Schedule Trigger": { "main": [[{ "node": "GET All Users", "type": "main", "index": 0 }]] },
     "GET All Users": { "main": [[{ "node": "Loop Over Users", "type": "main", "index": 0 }]] },
-    "Loop Over Users": { "main": [[{ "node": "Is New User?", "type": "main", "index": 0 }]] },
+    "Loop Over Users": { "main": [[], [{ "node": "Is New User?", "type": "main", "index": 0 }]] },
     "Is New User?": {
       "main": [
         [{ "node": "POST Onboarding Brief", "type": "main", "index": 0 }],

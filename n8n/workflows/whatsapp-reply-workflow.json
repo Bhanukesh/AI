@@ -26,7 +26,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.API_BASE_URL }}/delivery/logs?latest=true",
+        "url": "http://localhost:5518/delivery/logs?latest=true",
         "options": {}
       },
       "name": "GET Latest Brief",
@@ -44,7 +44,7 @@
         },
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"from\": \"AI Daily Brief <brief@yourdomain.com>\",\n  \"to\": [\"{{ $json[0].userEmail }}\"],\n  \"subject\": \"🤖 Your Full AI Daily Brief\",\n  \"html\": \"<p>Here is your full brief. Check your latest delivery log for the complete content.</p>\"\n}",
+        "jsonBody": "={\n  \"from\": \"AI Daily Brief <onboarding@resend.dev>\",\n  \"to\": [\"{{ $json[0].userEmail }}\"],\n  \"subject\": \"🤖 Your Full AI Daily Brief\",\n  \"html\": \"<p>Here is your full brief. Check your latest delivery log for the complete content.</p>\"\n}",
         "options": {}
       },
       "name": "Send Full Email",
