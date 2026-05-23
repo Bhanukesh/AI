@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from models import TodoClassificationRequest, TodoClassificationResponse
 from openai_service import get_classifier
+from routes.brief_routes import router as brief_router
 
-app = FastAPI(title="Movies API", version="v1", docs_url="/swagger", redoc_url="/redoc")
-app.title = "Movies API"
+app = FastAPI(title="LLM Council API", version="v1", docs_url="/swagger", redoc_url="/redoc")
+app.title = "LLM Council API"
 app.version = "v1"
-app.description = "Movies API with Todo Classification"
+app.description = "LLM Council — AI Daily Brief System"
 
 # Configure CORS to allow all origins
 app.add_middleware(
@@ -43,3 +44,5 @@ async def classify_todo(request: TodoClassificationRequest):
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Classification failed: {str(e)}")
+
+app.include_router(brief_router)

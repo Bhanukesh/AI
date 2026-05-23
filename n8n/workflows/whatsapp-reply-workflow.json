@@ -1,0 +1,62 @@
+{
+  "name": "LLM Council — WhatsApp Reply Listener",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "twilio-webhook",
+        "options": {}
+      },
+      "name": "Twilio Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "twilio-whatsapp-reply"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.body.Body }}", "value2": "FULL", "operation": "equals" }]
+        }
+      },
+      "name": "Is FULL Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/delivery/logs?latest=true",
+        "options": {}
+      },
+      "name": "GET Latest Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "bodyType": "json",
+        "jsonBody": "={\n  \"from\": \"AI Daily Brief <brief@yourdomain.com>\",\n  \"to\": [\"{{ $json[0].userEmail }}\"],\n  \"subject\": \"🤖 Your Full AI Daily Brief\",\n  \"html\": \"<p>Here is your full brief. Check your latest delivery log for the complete content.</p>\"\n}",
+        "options": {}
+      },
+      "name": "Send Full Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 200]
+    }
+  ],
+  "connections": {
+    "Twilio Webhook": { "main": [[{ "node": "Is FULL Reply?", "type": "main", "index": 0 }]] },
+    "Is FULL Reply?": { "main": [[{ "node": "GET Latest Brief", "type": "main", "index": 0 }]] },
+    "GET Latest Brief": { "main": [[{ "node": "Send Full Email", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

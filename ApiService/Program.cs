@@ -1,5 +1,6 @@
 using System.Reflection;
 using ApiService.Python;
+using ApiService.Brief;
 using Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +27,7 @@ builder.AddSqlServerDbContext<TodoDbContext>("tododb");
 builder.Services.AddOpenApiDocument(options =>
 {
     options.DocumentName = "v1";
-    options.Title = "Todos API";
+    options.Title = "LLM Council — AI Daily Brief";
     options.Version = "v1";
     options.UseHttpAttributeNameAsOperationId = true;
 
@@ -37,6 +38,9 @@ builder.Services.AddOpenApiDocument(options =>
 });
 
 builder.Services.AddHttpClient<PythonClient>(
+    static client => client.BaseAddress = new("http://pythonapi"));
+
+builder.Services.AddHttpClient<BriefClient>(
     static client => client.BaseAddress = new("http://pythonapi"));
 
 var app = builder.Build();

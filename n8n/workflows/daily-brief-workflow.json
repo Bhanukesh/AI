@@ -1,0 +1,143 @@
+{
+  "name": "LLM Council — AI Daily Brief",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 20 * * *" }] }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/users",
+        "options": {}
+      },
+      "name": "GET All Users",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": { "batchSize": 1, "options": {} },
+      "name": "Loop Over Users",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.isNewUser }}", "value2": true }]
+        }
+      },
+      "name": "Is New User?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/brief/onboarding",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
+        "options": {}
+      },
+      "name": "POST Onboarding Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/brief/generate",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
+        "options": {}
+      },
+      "name": "POST Daily Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "from": "={{ $env.TWILIO_WHATSAPP_NUMBER }}",
+        "to": "=whatsapp:{{ $('Loop Over Users').item.json.whatsAppNumber }}",
+        "message": "={{ $json.whatsappText }}"
+      },
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "credentials": { "twilioApi": { "id": "1", "name": "Twilio account" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "bodyType": "json",
+        "jsonBody": "={\n  \"from\": \"AI Daily Brief <brief@yourdomain.com>\",\n  \"to\": [\"{{ $('Loop Over Users').item.json.email }}\"],\n  \"subject\": \"🤖 AI Daily Brief | {{ $now.format('MMM D, YYYY') }}\",\n  \"html\": {{ JSON.stringify($json.briefHtml) }}\n}",
+        "options": {}
+      },
+      "name": "Send Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/delivery/log",
+        "method": "POST",
+        "sendBody": true,
+        "bodyType": "json",
+        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('Send WhatsApp').item.json.whatsappText.substring(0, 200) }}\"\n}",
+        "options": {}
+      },
+      "name": "Log Delivery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.API_BASE_URL }}/users/{{ $('Loop Over Users').item.json.id }}",
+        "method": "PUT",
+        "sendBody": true,
+        "bodyType": "json",
+        "jsonBody": "={\n  \"isNewUser\": false,\n  \"historyBiteIndex\": {{ $('Loop Over Users').item.json.historyBiteIndex + 1 }},\n  \"lastSentAt\": \"{{ $now.toISO() }}\"\n}",
+        "options": {}
+      },
+      "name": "Update User Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2000, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "GET All Users", "type": "main", "index": 0 }]] },
+    "GET All Users": { "main": [[{ "node": "Loop Over Users", "type": "main", "index": 0 }]] },
+    "Loop Over Users": { "main": [[{ "node": "Is New User?", "type": "main", "index": 0 }]] },
+    "Is New User?": {
+      "main": [
+        [{ "node": "POST Onboarding Brief", "type": "main", "index": 0 }],
+        [{ "node": "POST Daily Brief", "type": "main", "index": 0 }]
+      ]
+    },
+    "POST Onboarding Brief": { "main": [[{ "node": "Send WhatsApp", "type": "main", "index": 0 }]] },
+    "POST Daily Brief": { "main": [[{ "node": "Send WhatsApp", "type": "main", "index": 0 }]] },
+    "Send WhatsApp": { "main": [[{ "node": "Send Email via Resend", "type": "main", "index": 0 }]] },
+    "Send Email via Resend": { "main": [[{ "node": "Log Delivery", "type": "main", "index": 0 }]] },
+    "Log Delivery": { "main": [[{ "node": "Update User Record", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
