@@ -40,11 +40,12 @@
     },
     {
       "parameters": {
-        "url": "http://host.docker.internal:5518/brief/onboarding",
+        "url": "http://host.docker.internal:8080/brief/onboarding",
         "method": "POST",
         "sendBody": true,
-        "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
-        "options": {}
+        "bodyType": "json",
+        "jsonBody": "={ \"user_id\": \"{{ $json.id }}\" }",
+        "options": { "timeout": 120000 }
       },
       "name": "POST Onboarding Brief",
       "type": "n8n-nodes-base.httpRequest",
@@ -53,11 +54,12 @@
     },
     {
       "parameters": {
-        "url": "http://host.docker.internal:5518/brief/generate",
+        "url": "http://host.docker.internal:8080/brief/generate",
         "method": "POST",
         "sendBody": true,
-        "bodyParameters": { "parameters": [{ "name": "userId", "value": "={{ $json.id }}" }] },
-        "options": {}
+        "bodyType": "json",
+        "jsonBody": "={ \"user_id\": \"{{ $json.id }}\", \"history_bite_index\": {{ $json.historyBiteIndex }} }",
+        "options": { "timeout": 120000 }
       },
       "name": "POST Daily Brief",
       "type": "n8n-nodes-base.httpRequest",
@@ -68,7 +70,7 @@
       "parameters": {
         "from": "whatsapp:+14155238886",
         "to": "={{ 'whatsapp:' + $('Loop Over Users').item.json.whatsAppNumber }}",
-        "message": "={{ $json.whatsAppText }}"
+        "message": "={{ $json.whatsapp_text }}"
       },
       "name": "Send WhatsApp",
       "type": "n8n-nodes-base.twilio",
@@ -86,7 +88,7 @@
         },
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"from\": \"AI Daily Brief <onboarding@resend.dev>\",\n  \"to\": [\"{{ $('Loop Over Users').item.json.email }}\"],\n  \"subject\": \"🤖 AI Daily Brief | {{ $now.format('MMM D, YYYY') }}\",\n  \"html\": {{ JSON.stringify($json.briefHtml) }}\n}",
+        "jsonBody": "={\n  \"from\": \"AI Daily Brief <onboarding@resend.dev>\",\n  \"to\": [\"{{ $('Loop Over Users').item.json.email }}\"],\n  \"subject\": \"🤖 AI Daily Brief | {{ $now.format('MMM D, YYYY') }}\",\n  \"html\": {{ JSON.stringify($json.brief_html) }}\n}",
         "options": {}
       },
       "name": "Send Email via Resend",
@@ -100,7 +102,7 @@
         "method": "POST",
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('Send WhatsApp').item.json.whatsAppText.substring(0, 200) }}\"\n}",
+        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('POST Onboarding Brief').item.json.whatsapp_text ? $('POST Onboarding Brief').item.json.whatsapp_text.substring(0, 200) : $('POST Daily Brief').item.json.whatsapp_text.substring(0, 200) }}\"\n}",
         "options": {}
       },
       "name": "Log Delivery",
