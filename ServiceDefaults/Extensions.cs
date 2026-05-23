@@ -28,13 +28,8 @@ public static class Extensions
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
-            // LLM inference needs long timeouts and no retries (non-idempotent, expensive)
-            http.AddStandardResilienceHandler(options =>
-            {
-                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(100);
-                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(120);
-                options.Retry.MaxRetryAttempts = 0;
-            });
+            // Turn on resilience by default
+            http.AddStandardResilienceHandler();
 
             // Turn on service discovery by default
             http.AddServiceDiscovery();
