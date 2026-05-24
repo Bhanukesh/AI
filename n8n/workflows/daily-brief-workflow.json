@@ -102,7 +102,7 @@
         "method": "POST",
         "sendBody": true,
         "bodyType": "json",
-        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('POST Onboarding Brief').item.json.whatsapp_text ? $('POST Onboarding Brief').item.json.whatsapp_text.substring(0, 200) : $('POST Daily Brief').item.json.whatsapp_text.substring(0, 200) }}\"\n}",
+        "jsonBody": "={\n  \"userId\": \"{{ $('Loop Over Users').item.json.id }}\",\n  \"channel\": \"email\",\n  \"status\": \"sent\",\n  \"briefSummary\": \"{{ $('Send WhatsApp').item.json.sid ? $('Send WhatsApp').item.json.sid.substring(0, 200) : 'delivered' }}\"\n}",
         "options": {}
       },
       "name": "Log Delivery",
